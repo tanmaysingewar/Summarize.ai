@@ -156,7 +156,7 @@ export default function Home() {
         </div>
       )}
 
-      <p className="mt-10 text-center text-sm pb-10">Created by Tanmay Singewar</p>
+      <p className="mt-10 text-center text-sm pb-10">Created by AIGurukul</p>
     </div>
   );
 }
