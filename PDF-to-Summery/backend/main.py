@@ -31,6 +31,7 @@ def create_item(docs: Docs):
     if docs.data == "":
         return {"error": "File is required"}
     else:
+
         content = "Instruction : Your are the summery generator, your job is to generate the summery of the give data and also you get some additional input how you should generate the summery, if not give just generate summery. Data :"+docs.data + "And Additional input : " + docs.userPrompt + "dont give any explanation  like here is you summery or something like that just start with the summery. And summery should be at least of 200 words."
 
         try : 
