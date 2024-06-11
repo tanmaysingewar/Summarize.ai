@@ -1,3 +1,5 @@
 fastapi
 hypercorn
 groq
+uvicorn
+fastapi-cors
