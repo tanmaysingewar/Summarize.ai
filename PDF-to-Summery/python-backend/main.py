@@ -15,23 +15,34 @@ class Docs(BaseModel):
 
 app = FastAPI()
 
-# Configure CORS
+origins = [
+    # "http://localhost",
+    # "http://localhost:3000",
+    "https://summarizer-aigurukul.vercel.app/",
+    "http://summarizer-aigurukul.vercel.app/",
+    "https://summarizer-aigurukul.vercel.app",
+    "http://summarizer-aigurukul.vercel.app",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins= ["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
+@app.get("/health")
+def read_root():
+    print("Health Check")
+    return {"status": "ok"}
+
 
 @app.post("/summarize")
 def create_item(docs: Docs):
-    print(docs)
-
     if docs.data == "":
         return {"error": "File is required"}
     else:
-
         content = "Instruction : Your are a summary generator, your job is to generate summary of give data You have to follow instruction given on how to generate the summary, if no instruction given then just generate the summary. Data :"+docs.data + "Instruction: " + docs.userPrompt + "Instruction: summary should be at least 200 words long."
 
         try : 
