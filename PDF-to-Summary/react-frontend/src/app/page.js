@@ -36,6 +36,7 @@ export default function Page() {
     if (localStorage.getItem("Token")) {
         const difference = localStorage.getItem("Token") - Date.now();
         if (difference < 3600000) {
+          localStorage.clear();
           push("/dashboard");
         }
     }
@@ -44,7 +45,8 @@ export default function Page() {
   return (
     <div className="flex justify-center items-center h-screen">
       <Card className='max-w-[600px] border-none'>
-      <CardTitle className="text-2xl text-center">Welcome to PDF to Summary </CardTitle>
+      <CardTitle className="text-2xl text-center">Welcome to <br/> PDF to Summary & Chat
+      </CardTitle>
         <CardHeader>
           <CardTitle className="text-xl text-center">Login</CardTitle>
           <CardDescription className=' text-center'>Please enter your username and password to login.</CardDescription>
