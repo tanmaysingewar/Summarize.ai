@@ -13,7 +13,7 @@ from pathlib import Path
 UPLOAD_DIR = Path() / "upload"
 
 client = Groq(
-    api_key="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",
+    api_key="GORQ_API_KEY",
 )
 
 class Data(BaseModel):
