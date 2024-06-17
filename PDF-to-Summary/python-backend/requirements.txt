@@ -3,3 +3,7 @@ hypercorn
 groq
 uvicorn
 fastapi-cors
+python-docx 
+PyPDF2
+pathlib
+typing_extensions

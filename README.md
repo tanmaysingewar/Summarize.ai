@@ -15,13 +15,13 @@ PDF to Summary is a web application that allows users to upload PDF files and re
 
 - **Language:** Python
 - **Framework:** FastAPI
-- **SDK:** Gorq SDK
+- **SDK:** Gorq SDK 
+- **Modal:** Mixtral 8x7b Model  
 
 ### Frontend
 
 - **Framework:** Next.js (based on ReactJS)
 - **Libraries:**
-    - PDF to text
     - Shadcn (UI library)
     - Tailwind CSS
 
@@ -39,6 +39,7 @@ PDF to Summary is a web application that allows users to upload PDF files and re
 2. **Routes:**
     - `/health`: Endpoint to check the health of the Application.
     - `/summary`: Endpoint to return the summary of the uploaded PDF.
+    - `/chat`: Endpoint can chat with the model.
 3. **Dependencies:**
     - `requirements.txt`: Lists all Python dependencies.
     - `render.yaml`: Configuration file for deploying on Render.
@@ -49,8 +50,7 @@ PDF to Summary is a web application that allows users to upload PDF files and re
     - `page.js`: Main landing page where users can log In to the Application.
     - `dashboard/page.js`: Page to display the main interface of the application.
 2. **Components:**
-    - `UI`: Component for UI element.
-    - `SummaryDisplay.js`: Component for displaying the summary.
+    - `UI`: Component for shadcn UI elements.
 3. **Styles:**
     - Tailwind CSS for styling.
 

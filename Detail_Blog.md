@@ -20,7 +20,7 @@ Thus, we chose Python as the backend language and FastAPI as the framework after
 
 ## Choosing the Frontend Framework
 
-For the frontend, we need a framework that is widely used, has a large community, and is easy to deploy. Next.js (based on ReactJS) fits these criteria perfectly. It offers extensive library support, including libraries for PDF to text conversion, Shadcn (UI library), Tailwind CSS, and built-in routing, making it a suitable choice for our project.
+For the frontend, we need a framework that is widely used, has a large community, and is easy to deploy. Next.js (based on ReactJS) fits these criteria perfectly. It offers extensive library support, Shadcn (UI library), Tailwind CSS, and built-in routing, making it a suitable choice for our project.
 
 ## Deployment
 

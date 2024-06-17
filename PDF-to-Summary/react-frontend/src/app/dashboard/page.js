@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 
 import React, { useState, useEffect } from "react";
-import pdfToText from "react-pdftotext";
 
 import logo from "@/images/logo.png";
 
@@ -15,7 +14,6 @@ export default function Home() {
   const [file, setFile] = useState();
   const [fileName, setFileName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [pdfData, setPdfData] = useState("");
   const [Summary, setSummary] = useState([]);
   const [error, setError] = useState("");
   console.log(Summary);
@@ -56,21 +54,17 @@ export default function Home() {
 
   const generateSummary = () => {
     console.log("Generating Summary");
-    if (!pdfData) {
+    if (!file) {
       setError("Please upload a file");
       return;
     }
     setLoading(true);
-    setUserPrompt("");
-    fetch("https://textsummeryapisever.onrender.com/summarize", {
+    const formData = new FormData();
+    formData.append("upload_file", file);
+    formData.append("userPrompt", userPrompt);
+    fetch("http://127.0.0.1:8000/summarize", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        data: pdfData,
-        userPrompt: userPrompt,
-      }),
+      body: formData,
     })
       .then((response) => response.json())
       .then((data) => {
@@ -98,7 +92,7 @@ export default function Home() {
             summary: replacedText,
           },
         ]);
-
+        setUserPrompt("");
         setLoading(false);
       })
       .catch((error) => {
@@ -106,27 +100,24 @@ export default function Home() {
           userPrompt: userPrompt,
           summary: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">Not able to complete your request</span></div>`,
         }]);
+        setUserPrompt("");
         setLoading(false);
       });
   };
 
   const resolveQuery = () => {
     console.log("resolveQuery");
-    if (!pdfData) {
+    if (!file) {
       setError("Please upload a file");
       return;
     }
     setLoading(true);
-    setUserPrompt("");
-    fetch("https://textsummeryapisever.onrender.com/chat", {
+    const formData = new FormData();
+    formData.append("upload_file", file);
+    formData.append("userPrompt", userPrompt);
+    fetch("http://127.0.0.1:8000/chat", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        data: pdfData,
-        userPrompt: userPrompt,
-      }),
+      body: formData,
     })
       .then((response) => response.json())
       .then((data) => {
@@ -154,7 +145,7 @@ export default function Home() {
             summary: replacedText,
           },
         ]);
-
+        setUserPrompt("");
         setLoading(false);
       })
       .catch((error) => {
@@ -162,6 +153,7 @@ export default function Home() {
           userPrompt: userPrompt,
           summary: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">Not able to complete your request</span></div>`,
         }]);
+        setUserPrompt("");
         setLoading(false);
       });
   };
@@ -237,7 +229,7 @@ export default function Home() {
               <div className="mt-10 w-full">
                 <div className="bg-zinc-900 rounded-lg mx-8 px-5 md:pr-0 py-1">
                   <p className="mt-5 text-left font-semibold text-sm">
-                    Ask question
+                    Chat with document
                   </p>
                   <div className="m-auto mt-3 md:flex mb-6">
                     <Input
@@ -303,7 +295,6 @@ export default function Home() {
               <>
                 <Input
                   type="file"
-                  accept=".pdf"
                   onChange={fileAccepted}
                   className="max-w-[650px] pt-1.5 mt-10 mx-auto"
                 />
