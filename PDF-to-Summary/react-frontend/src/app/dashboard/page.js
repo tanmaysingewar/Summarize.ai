@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 
 import logo from "@/images/logo.png";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function Home() {
   const [file, setFile] = useState();
@@ -16,7 +17,14 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [Summary, setSummary] = useState([]);
   const [error, setError] = useState("");
-  console.log(Summary);
+  const [quiz, setQuiz] = useState([]);
+  const [quizAnswer, setQuizAnswer] = useState({});
+
+  const [marks, setMarks] = useState(0);
+
+  const [valuate, setValuate] = useState(false)
+
+  console.log(quizAnswer);
 
   const { push } = useRouter();
 
@@ -38,18 +46,18 @@ export default function Home() {
   const fileAccepted = (event) => {
     setFileName(event.target.files[0].name);
     setFile(event.target.files[0]);
-    pdfToText(event.target.files[0]).then((text) => {
-      setPdfData(text);
-    });
   };
 
   const anotherSummary = () => {
     setSummary("");
     setFile("");
     setFileName("");
-    setPdfData("");
     setError("");
     setLoading(false);
+  };
+
+  const selectAnswer = (questionNo, selectAnswer) => {
+    setQuizAnswer({...quizAnswer, [`Q${questionNo}`]:selectAnswer });
   };
 
   const generateSummary = () => {
@@ -62,21 +70,25 @@ export default function Home() {
     const formData = new FormData();
     formData.append("upload_file", file);
     formData.append("userPrompt", userPrompt);
-    fetch("http://127.0.0.1:8000/summarize", {
+    fetch("https://textsummeryapisever.onrender.com/summarize", {
       method: "POST",
       body: formData,
     })
       .then((response) => response.json())
       .then((data) => {
         if (data.error) {
-          console.log(data.error)
-          setSummary([...Summary,{
-            userPrompt: userPrompt,
-            summary: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">Please reduce the length of the messages or completion.</span></div>`,
-          }]);
+          console.log(data.error);
+          setSummary([
+            ...Summary,
+            {
+              userPrompt: userPrompt,
+              summary: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">Please reduce the length of the messages or completion.</span></div>`,
+            },
+          ]);
           setLoading(false);
           return;
         }
+        console.log(data);
 
         // Replace double asterisk words with <b> tags
         const boldRegex = /\*\*(.*?)\*\*/g;
@@ -96,10 +108,43 @@ export default function Home() {
         setLoading(false);
       })
       .catch((error) => {
-        setSummary([...Summary,{
-          userPrompt: userPrompt,
-          summary: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">Not able to complete your request</span></div>`,
-        }]);
+        setSummary([
+          ...Summary,
+          {
+            userPrompt: userPrompt,
+            summary: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">Not able to complete your request</span></div>`,
+          },
+        ]);
+        setUserPrompt("");
+        setLoading(false);
+      });
+  };
+
+  const generateQuiz = () => {
+    console.log("Generating Quiz");
+    if (!file) {
+      setError("Please upload a file");
+      return;
+    }
+    setLoading(true);
+    const formData = new FormData();
+    formData.append("upload_file", file);
+    // formData.append("userPrompt", "axYAW7PuSIM");
+    fetch("https://textsummeryapisever.onrender.com/quiz", {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+        setQuiz(data);
+        setUserPrompt("");
+        setLoading(false);
+      })
+      .catch((error) => {
+        setQuiz({
+          error: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">Not able to complete your request</span></div>`,
+        });
         setUserPrompt("");
         setLoading(false);
       });
@@ -115,18 +160,21 @@ export default function Home() {
     const formData = new FormData();
     formData.append("upload_file", file);
     formData.append("userPrompt", userPrompt);
-    fetch("http://127.0.0.1:8000/chat", {
+    fetch("https://textsummeryapisever.onrender.com/chat", {
       method: "POST",
       body: formData,
     })
       .then((response) => response.json())
       .then((data) => {
         if (data.error) {
-          console.log(data.error)
-          setSummary([...Summary,{
-            userPrompt: userPrompt,
-            summary: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">Please reduce the length of the messages or completion.</span></div>`,
-          }]);
+          console.log(data.error);
+          setSummary([
+            ...Summary,
+            {
+              userPrompt: userPrompt,
+              summary: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">Please reduce the length of the messages or completion.</span></div>`,
+            },
+          ]);
           setLoading(false);
           return;
         }
@@ -149,10 +197,13 @@ export default function Home() {
         setLoading(false);
       })
       .catch((error) => {
-        setSummary([...Summary,{
-          userPrompt: userPrompt,
-          summary: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">Not able to complete your request</span></div>`,
-        }]);
+        setSummary([
+          ...Summary,
+          {
+            userPrompt: userPrompt,
+            summary: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">Not able to complete your request</span></div>`,
+          },
+        ]);
         setUserPrompt("");
         setLoading(false);
       });
@@ -165,6 +216,10 @@ export default function Home() {
   const logOut = () => {
     localStorage.clear();
     push("/");
+  };
+
+  const getScore = () => {
+    setMarks(quiz.filter((item,index) => item.answer == quizAnswer[`Q${index+1}`]).length);
   };
 
   return (
@@ -180,12 +235,69 @@ export default function Home() {
           Upload a PDF file and get a Summary also you can chat with PDF
         </p>
       </div>
-      {Summary[0]?.summary ? (
+      {quiz[0] ? (
+        <>
+        {valuate ? <div className="mt-5 w-full p-8 ">
+          <p className="text-md text-center font-semibold">You have <br/> <span className="font-bold text-[40px]">{marks}</span> <br /> marks out of {quiz.length}</p>
+        </div> : ""}
+        {
+          quiz.map((item, index) => {
+            return (
+              <div key={index} className="w-full">
+                <div className={`p-4 border-2 ${valuate ? item.answer == quizAnswer[`Q${index + 1}`] ? "border-green-800" : "border-red-800" : "border-zinc-800"} mt-3 rounded-lg`}>
+                <p className="text-md text-left font-semibold">
+                  {(index + 1) + "] " + item.question}
+                </p>
+                {
+                  item.options.map((option, optIndex) => {
+                    return (
+                      <div key={optIndex} className="flex items-center mt-2">
+                        <input
+                          onClick={() => selectAnswer(index +1 , optIndex +1)}
+                          type="radio"
+                          id={`question-${index}-option-${optIndex}`}
+                          name={`question-${index}`}
+                          className="h-4 w-4 mr-2 mt-[2px]"
+                          disabled={valuate ? true : false}
+                        />
+                        <label className={`${valuate ? item.answer == optIndex + 1 ? "text-md text-left text-green-500" : quizAnswer[`Q${index + 1}`] == optIndex+1 ? "text-md text-left text-red-500" : "text-md text-left " : "text-md text-left"}`}>
+                          {option}{" "} 
+                        </label>
+                      </div>
+                    );
+                  })
+                }
+                {
+                  valuate ? item.answer == quizAnswer[`Q${index + 1}`] ? 
+                  <div className="mt-4 w-full bg-green-800 rounded-lg">
+                    <p className="text-md text-left text-green-100 font-semibold p-1 ml-3">Your Answer is Correct</p>
+                  </div> : 
+                  <div className="mt-4 w-full bg-red-800 rounded-lg">
+                    <p className="text-md text-left text-red-100 font-semibold p-1 ml-3">Your Answer is Incorrect</p>
+                  </div>
+                  : ""
+                }
+                </div>
+              </div>
+            );
+          })
+        }
+        <div>
+          <Button className="mt-5" onClick={() => {setValuate(true),getScore()}}>
+            Valuate
+          </Button>
+        </div>
+        
+        </>
+        
+      ) : Summary[0]?.summary ? (
         <>
           {Summary?.map((item, index) => {
             return (
               <div key={index} className="w-full px-8 mt-10">
-                <p className="text-md text-left font-bold">{index == 0 ? "Summary Prompt": "Question"}</p>
+                <p className="text-md text-left font-bold">
+                  {index == 0 ? "Summary Prompt" : "Question"}
+                </p>
                 <div className="bg-zinc-900 p-3 rounded-lg mt-2">
                   <p className="text-md text-left">
                     {item.userPrompt == "" ? (
@@ -308,23 +420,41 @@ export default function Home() {
               </>
             )}
           </div>
-          <div className="mt-5 w-full p-8">
-            <Label htmlFor="title">
-              You can provide optional instructions to create summary in text
-              box below!!
-            </Label>
-            <Textarea
-              id="title"
-              type="text"
-              onChange={handleChange}
-              className="mt-2"
-            />
-          </div>
-          <div className="w-fit m-auto">
-            <Button className="mt-5" onClick={() => generateSummary()}>
-              Generate Summary and Chat
-            </Button>
-          </div>
+          {!quiz[0] ? (
+            <>
+              <div className="mt-5 w-full p-8">
+                <Label htmlFor="title">
+                  You can provide optional instructions to create summary in
+                  text box below!!
+                </Label>
+                <Textarea
+                  id="title"
+                  type="text"
+                  onChange={handleChange}
+                  className="mt-2"
+                />
+              </div>
+              <div className="w-fit m-auto">
+                <Button className="mt-5" onClick={() => generateSummary()}>
+                  Generate Summary and Chat
+                </Button>
+              </div>
+              <div class="inline-flex items-center justify-center w-full">
+                <hr class="w-64 h-px my-8 bg-gray-200 border-0 dark:bg-gray-700" />
+                <span class="absolute px-3 font-medium text-gray-900 -translate-x-1/2 bg-white left-1/2 dark:text-white dark:bg-zinc-900">
+                  or
+                </span>
+              </div>
+
+              <div className="w-fit m-auto">
+                <Button className="mt-5" onClick={() => generateQuiz()}>
+                  Generate Quiz
+                </Button>
+              </div>
+            </>
+          ) : (
+            ""
+          )}
         </div>
       )}
       <p className="m-5 text-sm text-center mt-10">
