@@ -7,3 +7,6 @@ python-docx
 PyPDF2
 pathlib
 typing_extensions
+langchain-text-splitters
+llama-index
+youtube-transcript-api
