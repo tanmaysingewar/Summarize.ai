@@ -9,6 +9,13 @@
 
 PDF to Summary is a web application that allows users to upload PDF files and receive a concise summary of their content. This documentation provides a detailed guide on the project's structure, tech stack, deployment process, and usage instructions.
 
+# New Feature  Added
+### Quiz Generator : You can now generate quiz based on the uploaded pdf file
+
+- Just upload the pdf file and click on generate quiz button and you will get the quiz
+- You can also solve the quiz and get the marks
+
+
 ## Tech Stack
 
 ### Backend
