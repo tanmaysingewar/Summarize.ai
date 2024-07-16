@@ -45,7 +45,7 @@ export default function Page() {
   return (
     <div className="flex justify-center items-center h-screen">
       <Card className='max-w-[600px] border-none'>
-      <CardTitle className="text-2xl text-center">Welcome to <br/> PDF to Summary & Chat
+      <CardTitle className="text-2xl text-center">Welcome <br/> to Summarizer with Youtube Video <br/> and Documents
       </CardTitle>
         <CardHeader>
           <CardTitle className="text-xl text-center">Login</CardTitle>
