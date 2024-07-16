@@ -10,6 +10,7 @@ import React, { useState, useEffect } from "react";
 
 import logo from "@/images/logo.png";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function Home() {
   const [file, setFile] = useState();
@@ -19,10 +20,11 @@ export default function Home() {
   const [error, setError] = useState("");
   const [quiz, setQuiz] = useState([]);
   const [quizAnswer, setQuizAnswer] = useState({});
+  const [yt_link, setYt_link] = useState("");
 
   const [marks, setMarks] = useState(0);
 
-  const [valuate, setValuate] = useState(false)
+  const [valuate, setValuate] = useState(false);
 
   console.log(quizAnswer);
 
@@ -57,20 +59,44 @@ export default function Home() {
   };
 
   const selectAnswer = (questionNo, selectAnswer) => {
-    setQuizAnswer({...quizAnswer, [`Q${questionNo}`]:selectAnswer });
+    setQuizAnswer({ ...quizAnswer, [`Q${questionNo}`]: selectAnswer });
   };
 
   const generateSummary = () => {
+    if (yt_link) {
+      return generateSummaryFromYTVideo();
+    } else {
+      return generateSummaryFromDocument();
+    }
+  };
+
+  const generateQuiz = () => {
+    if (yt_link) {
+      return generateQuizFromYTVideo();
+    } else {
+      return generateQuizFromDocument();
+    }
+  };
+
+  const resolveQuery = () => {
+    if (yt_link) {
+      return resolveQueryFromYTVideo();
+    } else {
+      return resolveQueryFromDocument();
+    }
+  };
+
+  const generateSummaryFromDocument = () => {
     console.log("Generating Summary");
     if (!file) {
       setError("Please upload a file");
       return;
     }
-    setLoading(true);
+    setLoading("Loading Summary Please Wait");
     const formData = new FormData();
     formData.append("upload_file", file);
     formData.append("userPrompt", userPrompt);
-    fetch("https://textsummeryapisever.onrender.com/summarize", {
+    fetch("http://127.0.0.1:8000/summarize", {
       method: "POST",
       body: formData,
     })
@@ -82,7 +108,7 @@ export default function Home() {
             ...Summary,
             {
               userPrompt: userPrompt,
-              summary: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">Please reduce the length of the messages or completion.</span></div>`,
+              summary: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">${data.error}</span></div>`,
             },
           ]);
           setLoading(false);
@@ -120,17 +146,70 @@ export default function Home() {
       });
   };
 
-  const generateQuiz = () => {
+  const generateSummaryFromYTVideo = () => {
+    setLoading("Loading Summary Please Wait");
+    const formData = new FormData();
+    formData.append("yt_link", yt_link);
+    fetch("http://127.0.0.1:8000/ytsummarize", {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.error) {
+          console.log(data.error);
+          setSummary([
+            ...Summary,
+            {
+              userPrompt: userPrompt,
+              summary: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">Could not retrieve a transcript for the video</span></div>`,
+            },
+          ]);
+          setLoading(false);
+          return;
+        }
+
+        // Replace double asterisk words with <b> tags
+        const boldRegex = /\*\*(.*?)\*\*/g;
+        const formattedText = data.replace(boldRegex, "<b>$1</b>");
+
+        const regex = /^\*(.*$)/gm;
+        const replacedText = formattedText.replace(regex, "<li>$1</li>");
+
+        setSummary([
+          ...Summary,
+          {
+            userPrompt: userPrompt,
+            summary: replacedText,
+          },
+        ]);
+        setUserPrompt("");
+        setLoading(false);
+      })
+      .catch((error) => {
+        setSummary([
+          ...Summary,
+          {
+            userPrompt: userPrompt,
+            summary: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">Not able to complete your request</span></div>`,
+          },
+        ]);
+        setUserPrompt("");
+        setLoading(false);
+      });
+  };
+
+  const generateQuizFromDocument = () => {
     console.log("Generating Quiz");
     if (!file) {
       setError("Please upload a file");
       return;
     }
-    setLoading(true);
+    setLoading("Generating Quiz Please Wait");
     const formData = new FormData();
     formData.append("upload_file", file);
     // formData.append("userPrompt", "axYAW7PuSIM");
-    fetch("https://textsummeryapisever.onrender.com/quiz", {
+    fetch("http://127.0.0.1:8000/quiz", {
       method: "POST",
       body: formData,
     })
@@ -150,17 +229,40 @@ export default function Home() {
       });
   };
 
-  const resolveQuery = () => {
-    console.log("resolveQuery");
+  const generateQuizFromYTVideo = () => {
+    setLoading("Loading Quiz Please Wait");
+    const formData = new FormData();
+    formData.append("yt_link", yt_link);
+    fetch("http://127.0.0.1:8000/ytquiz", {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+        setQuiz(data);
+        setUserPrompt("");
+        setLoading(false);
+      })
+      .catch((error) => {
+        setQuiz({
+          error: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">Could not retrieve a transcript for the video</span></div>`,
+        });
+        setUserPrompt("");
+        setLoading(false);
+      });
+  };
+
+  const resolveQueryFromDocument = () => {
     if (!file) {
       setError("Please upload a file");
       return;
     }
-    setLoading(true);
+    setLoading("Loading Summary Please Wait");
     const formData = new FormData();
     formData.append("upload_file", file);
     formData.append("userPrompt", userPrompt);
-    fetch("https://textsummeryapisever.onrender.com/chat", {
+    fetch("http://127.0.0.1:8000/chat", {
       method: "POST",
       body: formData,
     })
@@ -172,7 +274,7 @@ export default function Home() {
             ...Summary,
             {
               userPrompt: userPrompt,
-              summary: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">Please reduce the length of the messages or completion.</span></div>`,
+              summary: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">Error Occurred in Chat Completion</span></div>`,
             },
           ]);
           setLoading(false);
@@ -209,6 +311,60 @@ export default function Home() {
       });
   };
 
+  const resolveQueryFromYTVideo = () => {
+    setLoading("Loading Summary Please Wait");
+    const formData = new FormData();
+    formData.append("yt_link", yt_link);
+    formData.append("userPrompt", userPrompt);
+    fetch("http://127.0.0.1:8000/ytchat", {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.error) {
+          console.log(data.error);
+          setSummary([
+            ...Summary,
+            {
+              userPrompt: userPrompt,
+              summary: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">Could not retrieve a transcript for the video</span></div>`,
+            },
+          ]);
+          setLoading(false);
+          return;
+        }
+
+        // Replace double asterisk words with <b> tags
+        const boldRegex = /\*\*(.*?)\*\*/g;
+        const formattedText = data.replace(boldRegex, "<b>$1</b>");
+
+        const regex = /^\*(.*$)/gm;
+        const replacedText = formattedText.replace(regex, "<li>$1</li>");
+
+        setSummary([
+          ...Summary,
+          {
+            userPrompt: userPrompt,
+            summary: replacedText,
+          },
+        ]);
+        setUserPrompt("");
+        setLoading(false);
+      })
+      .catch((error) => {
+        setSummary([
+          ...Summary,
+          {
+            userPrompt: userPrompt,
+            summary: `<div className="bg-red-100 border border-red-400 text-red-700 px-4 rounded relative"><strong className="font-bold text-red-700">Error Occurred:</strong><br/> <span className="block sm:inline">${data.error}</span></div>`,
+          },
+        ]);
+        setUserPrompt("");
+        setLoading(false);
+      });
+  };
+
   const handleChange = (event) => {
     setUserPrompt(event.target.value);
   };
@@ -219,7 +375,10 @@ export default function Home() {
   };
 
   const getScore = () => {
-    setMarks(quiz.filter((item,index) => item.answer == quizAnswer[`Q${index+1}`]).length);
+    setMarks(
+      quiz.filter((item, index) => item.answer == quizAnswer[`Q${index + 1}`])
+        .length
+    );
   };
 
   return (
@@ -228,68 +387,106 @@ export default function Home() {
         <Image src={logo} alt="Logo" height={100} width={100} />
       </div>
       <h1 className="text-2xl mt-5 font-bold text-center">
-        Summarize & Chat with PDF
+        Summarize & Chat with <br/> Youtube Video or Documents
       </h1>
       <div className="m-5">
         <p className="text-md mt-2 text-center">
-          Upload a PDF file and get a Summary also you can chat with PDF
+          Upload a PDF file or Youtube link and generate Summery and Quiz also you can chat with your Documents
         </p>
       </div>
-      {quiz[0] ? (
+      {quiz.error ? 
         <>
-        {valuate ? <div className="mt-5 w-full p-8 ">
-          <p className="text-md text-center font-semibold">You have <br/> <span className="font-bold text-[40px]">{marks}</span> <br /> marks out of {quiz.length}</p>
-        </div> : ""}
-        {
-          quiz.map((item, index) => {
+          <div className="mt-5 w-full p-8 text-center">
+              <p className="text-md text-center font-semibold">
+                Error Occurred
+              </p>
+              {quiz.error}
+          </div>
+        
+        </>
+      : quiz[0] ? (
+        <>
+          {valuate ? (
+            <div className="mt-5 w-full p-8 ">
+              <p className="text-md text-center font-semibold">
+                You have <br />{" "}
+                <span className="font-bold text-[40px]">{marks}</span> <br />{" "}
+                marks out of {quiz.length}
+              </p>
+            </div>
+          ) : (
+            ""
+          )}
+          {quiz.map((item, index) => {
             return (
               <div key={index} className="w-full">
-                <div className={`p-4 border-2 ${valuate ? item.answer == quizAnswer[`Q${index + 1}`] ? "border-green-800" : "border-red-800" : "border-zinc-800"} mt-3 rounded-lg`}>
-                <p className="text-md text-left font-semibold">
-                  {(index + 1) + "] " + item.question}
-                </p>
-                {
-                  item.options.map((option, optIndex) => {
-                    return (
-                      <div key={optIndex} className="flex items-center mt-2">
-                        <input
-                          onClick={() => selectAnswer(index +1 , optIndex +1)}
-                          type="radio"
-                          id={`question-${index}-option-${optIndex}`}
-                          name={`question-${index}`}
-                          className="h-4 w-4 mr-2 mt-[2px]"
-                          disabled={valuate ? true : false}
-                        />
-                        <label className={`${valuate ? item.answer == optIndex + 1 ? "text-md text-left text-green-500" : quizAnswer[`Q${index + 1}`] == optIndex+1 ? "text-md text-left text-red-500" : "text-md text-left " : "text-md text-left"}`}>
+                <div
+                  className={`p-4 border-2 ${
+                    valuate
+                      ? item.answer == quizAnswer[`Q${index + 1}`]
+                        ? "border-green-800"
+                        : "border-red-800"
+                      : "border-zinc-800"
+                  } mt-3 rounded-lg`}
+                >
+                  <p className="text-md text-left font-semibold">
+                    {index + 1 + "] " + item.question}
+                  </p>
+                  <RadioGroup >
+                    {item.options.map((option, optIndex) => {
+                      return (
+                        <div key={optIndex} className="flex items-center mt-2">
+
+                          <RadioGroupItem
+                            value={`question-${index}-option-${optIndex}`}
+                            onClick={() =>
+                              selectAnswer(index + 1, optIndex + 1)
+                            }
+                            type="radio"
+                            id={`question-${index}-option-${optIndex}`}
+                            name={`question-${index}`}
+                            className="h-5 w-5 mr-2 mt-[2px]"
+                            disabled={valuate ? true : false}
+                          />
+                          <Label htmlFor={`question-${index}-option-${optIndex}`} className={`${valuate ? item.answer == optIndex + 1 ? "text-md text-left text-green-500" : quizAnswer[`Q${index + 1}`] == optIndex+1 ? "text-md text-left text-red-500" : "text-md text-left " : "text-md text-left"}`}>
                           {option}{" "} 
-                        </label>
+                        </Label>
+                        </div>
+                      );
+                    })}
+                  </RadioGroup>
+                  {valuate ? (
+                    item.answer == quizAnswer[`Q${index + 1}`] ? (
+                      <div className="mt-4 w-full bg-green-800 rounded-lg">
+                        <p className="text-md text-left text-green-100 font-semibold p-1 ml-3">
+                          Your Answer is Correct
+                        </p>
                       </div>
-                    );
-                  })
-                }
-                {
-                  valuate ? item.answer == quizAnswer[`Q${index + 1}`] ? 
-                  <div className="mt-4 w-full bg-green-800 rounded-lg">
-                    <p className="text-md text-left text-green-100 font-semibold p-1 ml-3">Your Answer is Correct</p>
-                  </div> : 
-                  <div className="mt-4 w-full bg-red-800 rounded-lg">
-                    <p className="text-md text-left text-red-100 font-semibold p-1 ml-3">Your Answer is Incorrect</p>
-                  </div>
-                  : ""
-                }
+                    ) : (
+                      <div className="mt-4 w-full bg-red-800 rounded-lg">
+                        <p className="text-md text-left text-red-100 font-semibold p-1 ml-3">
+                          Your Answer is Incorrect
+                        </p>
+                      </div>
+                    )
+                  ) : (
+                    ""
+                  )}
                 </div>
               </div>
             );
-          })
-        }
-        <div>
-          <Button className="mt-5" onClick={() => {setValuate(true),getScore()}}>
-            Valuate
-          </Button>
-        </div>
-        
+          })}
+          <div>
+            <Button
+              className="mt-5"
+              onClick={() => {
+                setValuate(true), getScore();
+              }}
+            >
+              Valuate
+            </Button>
+          </div>
         </>
-        
       ) : Summary[0]?.summary ? (
         <>
           {Summary?.map((item, index) => {
@@ -374,9 +571,7 @@ export default function Home() {
         </>
       ) : loading ? (
         <>
-          <p className="text-lg text-center mt-10 font-semibold">
-            Loading Summary Please Wait
-          </p>
+          <p className="text-lg text-center mt-10 font-semibold">{loading}</p>
           <div className="m-auto">
             <svg
               aria-hidden="true"
@@ -405,11 +600,18 @@ export default function Home() {
               </p>
             ) : (
               <>
+              <p className="ml-2"> 
+                  Upload a file to summarize
+                </p>
                 <Input
                   type="file"
                   onChange={fileAccepted}
-                  className="max-w-[650px] pt-1.5 mt-10 mx-auto"
+                  className="max-w-[650px] pt-1.5 mt-2 mx-auto"
                 />
+                
+                <p className="text-xs ml-2 mt-2"> 
+                  Supported Formats : pdf | docx | txt
+                </p>
                 {error ? (
                   <p className="text-sm text-left mx-3 mt-1 font-semibold text-red-600">
                     {error}
@@ -417,12 +619,28 @@ export default function Home() {
                 ) : (
                   ""
                 )}
+                <div className="inline-flex items-center justify-center w-full mt-1">
+                  <hr className="w-64 h-px my-8 bg-gray-200 border-0 dark:bg-gray-700" />
+                  <span className="absolute px-3 font-medium text-gray-900 -translate-x-1/2 bg-white left-1/2 dark:text-white dark:bg-[#0B0A09]">
+                    or
+                  </span>
+                </div>
+                <div className="mt-2 w-full">
+                  <Label className="mt-10">
+                    Paste Youtube Link to summarize
+                  </Label>
+                  <Input
+                    placeholder="Enter Youtube Link"
+                    onChange={(e) => setYt_link(event.target.value)}
+                    className="mt-2"
+                  />
+                </div>
               </>
             )}
           </div>
           {!quiz[0] ? (
             <>
-              <div className="mt-5 w-full p-8">
+              <div className="mt-0 w-full p-8">
                 <Label htmlFor="title">
                   You can provide optional instructions to create summary in
                   text box below!!
@@ -434,22 +652,21 @@ export default function Home() {
                   className="mt-2"
                 />
               </div>
-              <div className="w-fit m-auto">
-                <Button className="mt-5" onClick={() => generateSummary()}>
-                  Generate Summary and Chat
-                </Button>
-              </div>
-              <div class="inline-flex items-center justify-center w-full">
-                <hr class="w-64 h-px my-8 bg-gray-200 border-0 dark:bg-gray-700" />
-                <span class="absolute px-3 font-medium text-gray-900 -translate-x-1/2 bg-white left-1/2 dark:text-white dark:bg-zinc-900">
-                  or
-                </span>
-              </div>
+              <div className="w-full m-auto sm:flex justify-between">
+                <div className="w-fit m-auto">
+                  <Button className="mt-5" onClick={() => generateSummary()}>
+                    Summarize & Chat
+                  </Button>
+                </div>
 
-              <div className="w-fit m-auto">
-                <Button className="mt-5" onClick={() => generateQuiz()}>
-                  Generate Quiz
-                </Button>
+                <div className="w-fit m-auto sm:mt-0 mt-5">
+                  <Button
+                    className="mt-5 bg-green-700"
+                    onClick={() => generateQuiz()}
+                  >
+                    Generate the Quiz
+                  </Button>
+                </div>
               </div>
             </>
           ) : (
