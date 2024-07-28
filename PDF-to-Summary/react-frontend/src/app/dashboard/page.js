@@ -22,6 +22,8 @@ export default function Home() {
   const [quizAnswer, setQuizAnswer] = useState({});
   const [yt_link, setYt_link] = useState("");
 
+  console.log(quiz)
+
   const [marks, setMarks] = useState(0);
 
   const [valuate, setValuate] = useState(false);
@@ -96,7 +98,7 @@ export default function Home() {
     const formData = new FormData();
     formData.append("upload_file", file);
     formData.append("userPrompt", userPrompt);
-    fetch("http://127.0.0.1:8000/summarize", {
+    fetch(" http://127.0.0.1:8000/summarize", {
       method: "POST",
       body: formData,
     })
@@ -150,7 +152,7 @@ export default function Home() {
     setLoading("Loading Summary Please Wait");
     const formData = new FormData();
     formData.append("yt_link", yt_link);
-    fetch("http://127.0.0.1:8000/ytsummarize", {
+    fetch(" http://127.0.0.1:8000/ytsummarize", {
       method: "POST",
       body: formData,
     })
@@ -209,14 +211,14 @@ export default function Home() {
     const formData = new FormData();
     formData.append("upload_file", file);
     // formData.append("userPrompt", "axYAW7PuSIM");
-    fetch("http://127.0.0.1:8000/quiz", {
+    fetch(" http://127.0.0.1:8000/quiz", {
       method: "POST",
       body: formData,
     })
       .then((response) => response.json())
       .then((data) => {
         console.log(data);
-        setQuiz(data);
+        setQuiz(JSON.parse(data));
         setUserPrompt("");
         setLoading(false);
       })
@@ -233,14 +235,14 @@ export default function Home() {
     setLoading("Loading Quiz Please Wait");
     const formData = new FormData();
     formData.append("yt_link", yt_link);
-    fetch("http://127.0.0.1:8000/ytquiz", {
+    fetch(" http://127.0.0.1:8000/ytquiz", {
       method: "POST",
       body: formData,
     })
       .then((response) => response.json())
       .then((data) => {
         console.log(data);
-        setQuiz(data);
+        setQuiz(JSON.parse(data));
         setUserPrompt("");
         setLoading(false);
       })
@@ -262,7 +264,7 @@ export default function Home() {
     const formData = new FormData();
     formData.append("upload_file", file);
     formData.append("userPrompt", userPrompt);
-    fetch("http://127.0.0.1:8000/chat", {
+    fetch(" http://127.0.0.1:8000/chat", {
       method: "POST",
       body: formData,
     })
@@ -316,7 +318,7 @@ export default function Home() {
     const formData = new FormData();
     formData.append("yt_link", yt_link);
     formData.append("userPrompt", userPrompt);
-    fetch("http://127.0.0.1:8000/ytchat", {
+    fetch(" http://127.0.0.1:8000/ytchat", {
       method: "POST",
       body: formData,
     })
