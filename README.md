@@ -23,7 +23,7 @@ PDF to Summary is a web application that allows users to upload PDF files and re
 - **Language:** Python
 - **Framework:** FastAPI
 - **SDK:** Gorq SDK 
-- **Modal:** Mixtral 8x7b Model  
+- **Modal:**  Meta Llama 3 70B Model 
 
 ### Frontend
 
@@ -34,7 +34,7 @@ PDF to Summary is a web application that allows users to upload PDF files and re
 
 ### Deployment
 
-- **Backend:** Render
+- **Backend:** DigitalOcean (previously on Render)
 - **Frontend:** Vercel
 
 ## Project Structure
@@ -45,8 +45,11 @@ PDF to Summary is a web application that allows users to upload PDF files and re
     - Contains the FastAPI app initialization, route definitions, and Gorq SDK integration.
 2. **Routes:**
     - `/health`: Endpoint to check the health of the Application.
-    - `/summary`: Endpoint to return the summary of the uploaded PDF.
+    - `/summarize`: Endpoint to return the summary of the uploaded PDF.
     - `/chat`: Endpoint can chat with the model.
+    - `/ytsummarize`: Endpoint to return the summary based on URL of Youtube Video
+    - `/ytchat` : Endpoint can chat with the transcripted data from Youtube Video. 
+    - `/ytquiz` : Endpoint can generate the quiz with the transcripted data from YouTube. 
 3. **Dependencies:**
     - `requirements.txt`: Lists all Python dependencies.
     - `render.yaml`: Configuration file for deploying on Render.
