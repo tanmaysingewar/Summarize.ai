@@ -1,6 +1,8 @@
 from fastapi import FastAPI,File,UploadFile,Form
 from pydantic import BaseModel
 from typing_extensions import Annotated
+from typing import Union
+
 
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import TextFormatter
@@ -25,6 +27,12 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import traceback
 
+import requests
+import json
+
+url = "https://api.transcribetube.com/api/transcribeVideo"
+
+
 UPLOAD_DIR = Path() / "upload"
 
 client = Groq(
@@ -40,6 +48,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class YTTranscript(BaseModel):
+    yt_link: str
+    title: str
+
 
 def chunk_text(text, chunk_size=500):
     words = text.split()
@@ -76,6 +89,23 @@ def read_root():
     print("Health Check")
     return {"status": "ok"}
 
+
+def get_transcript(video_id):
+    payload = {
+        "language": "en",
+        "webhookUrl": "http://example.com/webhook",
+        "youtubeVideoId": "DHjqpvDnNGE"
+    }
+    headers = {
+        "api-key": "i!SxML+kG?+6m4HR8DXFkD8CMgnVI#rNroaWdMu2qP!Gz#ot",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.request("POST", url, json=payload, headers=headers)
+
+    print(response.text)
+
+    return response.text
 
 def extract_text_from_pdf(file_path):
     reader = PdfReader(file_path)
@@ -277,9 +307,14 @@ async def quiz(
         
         print(chat_completion.choices[0].message.content)
         json_format =  parse_quiz(chat_completion.choices[0].message.content) 
+        print(json_format)
+
+        json_format = json.dumps(json_format)
+        print(json_format)
 
         json_compatible_item_data = jsonable_encoder(json_format)
         print(json_compatible_item_data)
+
         return JSONResponse(content=json_compatible_item_data)
 
     except Exception as e:
@@ -293,24 +328,17 @@ def yt_summary(
     try:
         if not yt_link:
             return JSONResponse({"error": "YouTube link is required"})
-
-        # https://youtu.be/DHjqpvDnNGE?si=49jlB7vXUP9aAonR
-        # https://www.youtube.com/watch?v=DHjqpvDnNGE&t=33s
-
         try:
             video_id = extract_video_id(yt_link)
         except Exception as e:
             return {"error": str("Could not retrieve a transcript for the video")}
 
-        transcript = YouTubeTranscriptApi.get_transcript(video_id)
-        formatter = TextFormatter()
-
-        text_formatted = formatter.format_transcript(transcript)
+        transcript = get_transcript(video_id)
 
         content = (
             f"Instruction: You are a YouTube summary generator, your job is to generate a summary of the given data. "
             f"You have to follow the instructions given on how to generate the summary. If no instruction is given, "
-            f"then just generate the summary. Data: {text_formatted} & UserPrompt: {userPrompt} "
+            f"then just generate the summary. Data: {transcript} & UserPrompt: {userPrompt} "
             f"Instruction: The summary should be at least 200 words long."
         )
 
@@ -384,7 +412,7 @@ async def quiz(
         try:
             video_id = extract_video_id(yt_link)
         except Exception as e:
-            return {"error": str("Could not retrieve a transcript for the video")}
+            return {"error": str("Could not retrieve a transcript for the video YT API")}
 
         transcript = YouTubeTranscriptApi.get_transcript(video_id)
         formatter = TextFormatter()
@@ -449,9 +477,210 @@ async def quiz(
         
         print(chat_completion.choices[0].message.content)
         json_format =  parse_quiz(chat_completion.choices[0].message.content) 
+        print(json_format)
+
+        json_format = json.dumps(json_format)
+        print(json_format)
 
         json_compatible_item_data = jsonable_encoder(json_format)
         print(json_compatible_item_data)
+
+        return JSONResponse(content=json_compatible_item_data)
+
+    except Exception as e:
+        print(e)
+        return {"error": str("Could not retrieve a transcript for the video")}
+
+@app.post("/v2/ytquiz")
+async def v2YTquiz(
+    item : YTTranscript):
+    try: 
+        print(item)
+        yt_link = item.yt_link
+        if not yt_link:
+            return JSONResponse({"error": "YouTube link is required"})
+        print(yt_link)
+
+        try:
+            video_id = extract_video_id(yt_link)
+        except Exception as e:
+            return {"error": str("Could not retrieve a transcript for the video YT API")}
+
+        try : 
+            transcript = YouTubeTranscriptApi.get_transcript(video_id)
+            formatter = TextFormatter()
+        except Exception as e:
+            transcript = False
+
+        if transcript == False:
+            print("No transcript found")
+            content = (
+                f"Generate a quiz based on the give Topic : Topic: {item.title} "
+                f"Instructions :"
+                f"1. Generate a quiz based on the given information."
+                f"2. The quiz should be at least 10 questions long."
+                f"3. The quiz should be in the form of a list of questions and options."
+                f"Format of the quiz:"
+                f"Each question should be start with **Question :***"
+                f"Option should be start with **Option :***"
+                f"Each answer should be like **Answer :*** and only give the option number for the answer"
+                f"Options: 1, 2, 3, 4"
+                f"Answer: Answer"
+            ) 
+
+            chat_completion = client.chat.completions.create(
+                messages=[{"role": "user", "content": content}],
+                model="llama3-70b-8192",
+            )
+        else:
+            print("Transcript found")
+            print(transcript)
+            text_formatted = formatter.format_transcript(transcript)
+
+            text_splitter = RecursiveCharacterTextSplitter(
+                chunk_size=2000,
+                length_function=len,
+                is_separator_regex=False,
+            )
+
+            chunk = text_splitter.create_documents([text_formatted])
+
+            combined_text = ""
+            for i in range(4):
+                combined_text += str(random.choice(chunk))
+
+            content = (
+                f"Generate a quiz based on the following information: Data: {combined_text} "
+                f"Instructions :"
+                f"1. Generate a quiz based on the given information."
+                f"2. The quiz should be at least 10 questions long."
+                f"3. The quiz should be in the form of a list of questions and options."
+                f"Format of the quiz:"
+                f"Each question should be start with **Question :***"
+                f"Option should be start with **Option :***"
+                f"Each answer should be like **Answer :*** and only give the option number for the answer"
+                f"Options: 1, 2, 3, 4"
+                f"Answer: Answer"
+            ) 
+
+            chat_completion = client.chat.completions.create(
+                messages=[{"role": "user", "content": content}],
+                model="llama3-70b-8192",
+            )
+        
+        def parse_quiz(response):
+            question_blocks = re.split(r"\*\*Question \d+:\*\*", response)[1:]
+            parsed_quiz = []
+
+            for block in question_blocks:
+                question_match = re.search(r"^(.*?)\n", block)
+                question_text = question_match.group(1).strip() if question_match else block.strip()
+                
+                options = re.findall(r"\*\*Option (\d+):\*\* (.*?)\n", block)
+                formatted_options = [f"{opt[1]}" for opt in options]
+
+                answer_match = re.search(r"\*\*Answer:\*\* (\d+)", block)
+                answer_option = answer_match.group(1) if answer_match else ""
+
+                parsed_quiz.append({
+                    "question": question_text,
+                    "options": formatted_options,
+                    "answer": answer_option
+                })
+
+            return parsed_quiz
+
+        
+        print(chat_completion.choices[0].message.content)
+        json_format =  parse_quiz(chat_completion.choices[0].message.content) 
+
+        json_format = json.dumps(json_format)
+
+        json_compatible_item_data = jsonable_encoder(json_format)
+        print(json_compatible_item_data)
+
+        return JSONResponse(content=json_compatible_item_data)
+
+    except Exception as e:
+        print(e)
+        return {"error": str("Could not retrieve a transcript for the video")}
+
+
+@app.post("/v2/ytsummarize")
+async def v2YTsummarize(
+    item : YTTranscript):
+    try: 
+        print(item)
+        yt_link = item.yt_link
+        if not yt_link:
+            return JSONResponse({"error": "YouTube link is required"})
+        print(yt_link)
+
+        try:
+            video_id = extract_video_id(yt_link)
+        except Exception as e:
+            return {"error": str("Could not retrieve a transcript for the video YT API")}
+
+        try : 
+            transcript = YouTubeTranscriptApi.get_transcript(video_id)
+            formatter = TextFormatter()
+        except Exception as e:
+            transcript = False
+
+        if transcript == False:
+            print("No transcript found")
+            content = (
+                f"Instruction: You are a YouTube summary generator, your job is to generate a summary of the given data. "
+                f"You have to follow the instructions given on how to generate the summary. If no instruction is given, "
+                f"then just generate the summary on the topic : Topic: {item.title} "
+                f"Instruction: The summary should be at least 200 words long and formatted as follows:\n\n"
+                f"<h2>Summary of {item.title}</h2>\n\n"
+                f"<p>Summary text goes here, based on the provided data.</p>\n\n"
+                f"<ul>\n"
+                f"  <li>First key point</li>\n"
+                f"  <li>Second key point</li>\n"
+                f"  <li>Third key point</li>\n"
+                f"  <li>...</li>\n"
+                f"</ul>\n\n"
+                f"<p>Additional summary text or concluding remarks.</p>\n\n"
+                f"<p>Ready to test your knowledge? Take the quiz now and earn coins and XP!</p>"
+            )
+
+            chat_completion = client.chat.completions.create(
+                messages=[{"role": "user", "content": content}],
+                model="llama3-70b-8192",
+            )
+        else:
+            print("Transcript found")
+            print(transcript)
+            text_formatted = formatter.format_transcript(transcript)
+
+            content = (
+                f"Instruction: You are a YouTube summary generator, your job is to generate a summary of the given data. "
+                f"You have to follow the instructions given on how to generate the summary. If no instruction is given, "
+                f"then just generate the summary. Data: {text_formatted} "
+                f"Instruction: The summary should be at least 200 words long and formatted as follows:\n\n"
+                f"<h2>Summary of {item.title}</h2>\n\n"
+                f"<p>Summary text goes here, based on the provided data.</p>\n\n"
+                f"<ul>\n"
+                f"  <li>First key point</li>\n"
+                f"  <li>Second key point</li>\n"
+                f"  <li>Third key point</li>\n"
+                f"  <li>...</li>\n"
+                f"</ul>\n\n"
+                f"<p>Additional summary text or concluding remarks.</p>\n\n"
+                f"<p>Ready to test your knowledge? Take the quiz now and earn coins and XP!</p>"
+            )
+
+            chat_completion = client.chat.completions.create(
+                messages=[{"role": "user", "content": content}],
+                model="llama3-70b-8192",
+            )
+        
+
+        json_compatible_item_data = jsonable_encoder(chat_completion.choices[0].message.content)
+        print(json_compatible_item_data)
+
         return JSONResponse(content=json_compatible_item_data)
 
     except Exception as e:
