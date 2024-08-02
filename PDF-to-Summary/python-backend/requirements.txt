@@ -1,4 +1,5 @@
 fastapi
+fastapi[standard]
 hypercorn
 groq
 uvicorn

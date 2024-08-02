@@ -67,7 +67,7 @@ export default function Page() {
         </CardFooter>
         <p className=" mt-8 text-center text-sm pb-10">
         Created by{" "}
-        <a className=" text-orange-300" href="https://ai-guru-kul.vercel.app">
+        <a className=" text-orange-300" href="https://ai-gurukul.vercel.app">
           AIGurukul
         </a>
       </p>

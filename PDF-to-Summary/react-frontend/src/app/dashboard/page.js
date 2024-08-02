@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 
 import logo from "@/images/logo.png";
-import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function Home() {
@@ -98,7 +97,7 @@ export default function Home() {
     const formData = new FormData();
     formData.append("upload_file", file);
     formData.append("userPrompt", userPrompt);
-    fetch(" http://127.0.0.1:8000/summarize", {
+    fetch("https://urchin-app-63n46.ondigitalocean.app/summarize", {
       method: "POST",
       body: formData,
     })
@@ -152,7 +151,7 @@ export default function Home() {
     setLoading("Loading Summary Please Wait");
     const formData = new FormData();
     formData.append("yt_link", yt_link);
-    fetch(" http://127.0.0.1:8000/ytsummarize", {
+    fetch(" https://urchin-app-63n46.ondigitalocean.app/ytsummarize", {
       method: "POST",
       body: formData,
     })
@@ -211,7 +210,7 @@ export default function Home() {
     const formData = new FormData();
     formData.append("upload_file", file);
     // formData.append("userPrompt", "axYAW7PuSIM");
-    fetch(" http://127.0.0.1:8000/quiz", {
+    fetch(" https://urchin-app-63n46.ondigitalocean.app/quiz", {
       method: "POST",
       body: formData,
     })
@@ -235,7 +234,7 @@ export default function Home() {
     setLoading("Loading Quiz Please Wait");
     const formData = new FormData();
     formData.append("yt_link", yt_link);
-    fetch(" http://127.0.0.1:8000/ytquiz", {
+    fetch("https://urchin-app-63n46.ondigitalocean.app/ytquiz", {
       method: "POST",
       body: formData,
     })
@@ -264,7 +263,7 @@ export default function Home() {
     const formData = new FormData();
     formData.append("upload_file", file);
     formData.append("userPrompt", userPrompt);
-    fetch(" http://127.0.0.1:8000/chat", {
+    fetch(" https://urchin-app-63n46.ondigitalocean.app/chat", {
       method: "POST",
       body: formData,
     })
@@ -318,7 +317,7 @@ export default function Home() {
     const formData = new FormData();
     formData.append("yt_link", yt_link);
     formData.append("userPrompt", userPrompt);
-    fetch(" http://127.0.0.1:8000/ytchat", {
+    fetch("https://urchin-app-63n46.ondigitalocean.app/ytchat", {
       method: "POST",
       body: formData,
     })
@@ -398,28 +397,25 @@ export default function Home() {
       </div>
       {quiz.error ? 
         <>
-          <div className="mt-5 w-full p-8 text-center">
-              <p className="text-md text-center font-semibold">
-                Error Occurred
-              </p>
-              {quiz.error}
-          </div>
-        
+        <div dangerouslySetInnerHTML={{ __html: quiz.error }}className="text-md mt-5 text-center whitespace-pre-line " ></div>
         </>
       : quiz[0] ? (
         <>
           {valuate ? (
             <div className="mt-5 w-full p-8 ">
               <p className="text-md text-center font-semibold">
-                You have <br />{" "}
+                You scored <br />{" "}
                 <span className="font-bold text-[40px]">{marks}</span> <br />{" "}
                 marks out of {quiz.length}
               </p>
             </div>
           ) : (
-            ""
-          )}
-          {quiz.map((item, index) => {
+          <></>
+        )}
+        <div className="mt-5 w-full p-3">
+
+       
+          {quiz?.map((item, index) => {
             return (
               <div key={index} className="w-full">
                 <div
@@ -478,6 +474,7 @@ export default function Home() {
               </div>
             );
           })}
+           </div>
           <div>
             <Button
               className="mt-5"
@@ -510,7 +507,6 @@ export default function Home() {
                   dangerouslySetInnerHTML={{ __html: item.summary }}
                   className="text-md mt-5 text-left whitespace-pre-line "
                 ></p>
-                {/* Loop over this part */}
               </div>
             );
           })}
@@ -684,7 +680,7 @@ export default function Home() {
       </p>
       <p className=" text-center text-sm pb-10">
         Created by{" "}
-        <a className=" text-orange-300" href="https://ai-guru-kul.vercel.app">
+        <a className=" text-orange-300" href="https://ai-gurukul.vercel.app">
           AIGuruKul
         </a>
       </p>
