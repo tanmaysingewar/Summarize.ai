@@ -1,0 +1,14 @@
+slack_bolt
+groq
+
+PyPDF2
+python-docx 
+python-dotenv
+
+requests
+slack_sdk
+py-mon
+langchain_text_splitters
+joblib
+scikit-learn
+
